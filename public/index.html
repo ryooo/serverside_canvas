@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>test</title>
+</head>
+<body>
+<input id="image" name="image" type="file" />
+<div id="messages"></div>
+<img id="common" />
+<canvas id="result" width="400" height="400"></canvas>
+</body>
+<script>
+var URL = window.webkitURL || window.URL
+var socket = new WebSocket('ws://localhost:3000')
+socket.binaryType = 'arraybuffer';
+socket.addEventListener('message', function(val) {
+  
+  if (val.data.constructor === ArrayBuffer) {
+    // socket.sendBytes(buff)でemitされた場合
+    var c = document.getElementById('result')
+    var ctx = c.getContext('2d')
+    var imageData = ctx.createImageData(c.width, c.height)
+    var buffer = new Uint8Array(val.data)
+    for (var i=0; i < buffer.length; i++) {
+      imageData.data[i] = buffer[i]
+    }
+    ctx.putImageData(imageData, 0, 0);
+    console.log(buffer.length)
+  } else {
+    // socket.sendUTF(canvas.toDataURL())でemitされた場合
+    var img = document.getElementById('common')
+    img.src = val.data
+    console.log(val.data.length)
+  }
+}, false)
+
+document.getElementById('image').addEventListener('change', function(evt) {
+  var file = evt.target.files[0]
+  socket.send(file)
+}, false);
+
+</script>
+</html>
